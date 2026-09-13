@@ -10,7 +10,8 @@ fullnameOverride: chart-analyzer-optimized
 serviceAccount:
   create: true
   automount: true
-  annotations: {}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
   name: ''
 podAnnotations: {}
 podLabels: {}
@@ -1714,3 +1715,22 @@ env:
     secretKeyRef:
       name: chart-analyzer-optimized-mongodb
       key: uri
+
+# Vault Secrets Operator resources in the release namespace.
+vault:
+  enabled: true
+  connection:
+    address: https://vault.vault.svc.cluster.local:8200
+    caCertSecretRef: chart-analyzer-optimized-vault-ca
+    createCASecret: true
+    caCertificateFile: files/vault-ca.crt
+  auth:
+    mount: kubernetes
+    role: chart-analyzer-optimized-mongodb
+    audiences: [vault]
+  mongodb:
+    mount: secret
+    path: chart-analyzer-optimized/mongodb
+    refreshAfter: 1m
+    destinationSecret: chart-analyzer-optimized-mongodb
+    uriTemplate: '{{ printf "mongodb://%s:%s@mongodb.mongodb.svc.cluster.local:27017/?authSource=admin" (.Secrets.username | urlquery | replace "+" "%20") (.Secrets.password | urlquery | replace "+" "%20") }}'

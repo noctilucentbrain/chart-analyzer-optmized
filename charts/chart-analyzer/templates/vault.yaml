@@ -1,0 +1,75 @@
+{{- if .Values.vault.enabled }}
+{{- if .Values.vault.connection.createCASecret }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.vault.connection.caCertSecretRef }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+  labels:
+    {{- include "chart-analyzer.labels" . | nindent 4 }}
+type: Opaque
+data:
+  ca.crt: {{ required "Vault CA certificate file is required" (.Files.Get .Values.vault.connection.caCertificateFile) | b64enc | quote }}
+---
+{{- end }}
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultConnection
+metadata:
+  name: {{ include "chart-analyzer.fullname" . }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+  labels:
+    {{- include "chart-analyzer.labels" . | nindent 4 }}
+spec:
+  address: {{ .Values.vault.connection.address | quote }}
+  caCertSecretRef: {{ .Values.vault.connection.caCertSecretRef | quote }}
+  skipTLSVerify: false
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: {{ include "chart-analyzer.fullname" . }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    {{- include "chart-analyzer.labels" . | nindent 4 }}
+spec:
+  vaultConnectionRef: {{ include "chart-analyzer.fullname" . }}
+  method: kubernetes
+  mount: {{ .Values.vault.auth.mount | quote }}
+  kubernetes:
+    role: {{ .Values.vault.auth.role | quote }}
+    serviceAccount: {{ include "chart-analyzer.serviceAccountName" . }}
+    audiences:
+      {{- toYaml .Values.vault.auth.audiences | nindent 6 }}
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: {{ include "chart-analyzer.fullname" . }}-mongodb
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    {{- include "chart-analyzer.labels" . | nindent 4 }}
+spec:
+  vaultAuthRef: {{ include "chart-analyzer.fullname" . }}
+  type: kv-v2
+  mount: {{ .Values.vault.mongodb.mount | quote }}
+  path: {{ .Values.vault.mongodb.path | quote }}
+  refreshAfter: {{ .Values.vault.mongodb.refreshAfter | quote }}
+  hmacSecretData: true
+  destination:
+    create: true
+    overwrite: false
+    name: {{ .Values.vault.mongodb.destinationSecret | quote }}
+    transformation:
+      excludeRaw: true
+      includes: ["^(username|password)$"]
+      templates:
+        uri:
+          text: {{ .Values.vault.mongodb.uriTemplate | quote }}
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: {{ include "chart-analyzer.fullname" . }}
+{{- end }}

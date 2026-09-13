@@ -19,10 +19,9 @@ Before the first sync:
    authorization and chart rendering were verified successfully. Settings URL:
    https://github.com/noctilucentbrain/chart-analyzer-optmized/settings/keys
 2. Build and push the image using `make build` and `make push` from the service folder.
-3. Create namespace `chart-analyzer-optimized`, then create Secret
-   `chart-analyzer-optimized-mongodb` there with key `uri`. The chart selects
-   database `chart_analyzer_optimized`; its credentials must permit access.
-   See `../OPTIMIZATION.md` for the secret creation command.
+3. MongoDB credentials are supplied by the chart's Vault integration. See
+   [VAULT.md](VAULT.md) for bootstrap, secret rotation and namespace configuration.
+   The destination Secret is created by Vault Secrets Operator, not manually.
 
 Apply/update the Application from the service folder:
 

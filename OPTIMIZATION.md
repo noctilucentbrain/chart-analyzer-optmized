@@ -37,12 +37,10 @@ make push
 kubectl create namespace chart-analyzer-optimized
 ```
 
-Create the Mongo connection secret in that namespace. Use a file containing the connection URI, without a trailing newline:
-
-```sh
-kubectl -n chart-analyzer-optimized create secret generic chart-analyzer-optimized-mongodb \
-  --from-file=uri=/path/to/mongodb-uri.txt
-```
+MongoDB credentials are now managed by the chart's Vault Secrets Operator
+integration. Run `python3 scripts/configure-vault-mongodb.py` once (or after
+source credential rotation); see [argocd/VAULT.md](argocd/VAULT.md) for details.
+Do not manually create the destination Secret when Vault synchronization is enabled.
 
 The configured database is `chart_analyzer_optimized`, including an environment override. Its credentials must allow access to that database. MongoDB itself is not deployed by this chart. Use a separate Mongo instance as well if you need infrastructure-level performance isolation.
 

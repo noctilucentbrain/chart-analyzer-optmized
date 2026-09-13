@@ -60,9 +60,20 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.env }}
+          {{- if or .Values.vault.enabled .Values.env }}
           env:
-            {{- toYaml . | nindent 12 }}
+            {{- if .Values.vault.enabled }}
+            - name: CHART_ANALYZER_MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.vault.mongodb.destinationSecret | quote }}
+                  key: uri
+            {{- end }}
+            {{- range .Values.env }}
+            {{- if or (not $.Values.vault.enabled) (ne .name "CHART_ANALYZER_MONGODB_URI") }}
+            - {{- toYaml . | nindent 14 }}
+            {{- end }}
+            {{- end }}
           {{- end }}
           {{- if .Values.envFrom.enabled }}
           envFrom:
