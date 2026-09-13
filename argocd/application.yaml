@@ -6,9 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: git@github.com:noctilucentbrain/chart-analyzer-optimized.git
+    repoURL: git@github.com:noctilucentbrain/chart-analyzer-optmized.git
     targetRevision: main
-    path: chart-analyzer-optimized/charts/chart-analyzer
+    path: charts/chart-analyzer
     helm:
       releaseName: chart-analyzer-optimized
       valueFiles:

@@ -1,9 +1,9 @@
 # Argo CD deployment
 
 `application.yaml` deploys the Helm chart from the `main` branch of
-`git@github.com:noctilucentbrain/chart-analyzer-optimized.git` into namespace
-`chart-analyzer-optimized`. The repository root contains the service folder,
-so the chart path is `chart-analyzer-optimized/charts/chart-analyzer`.
+`git@github.com:noctilucentbrain/chart-analyzer-optmized.git` into namespace
+`chart-analyzer-optimized`. The repository root is the service folder,
+so the chart path is `charts/chart-analyzer`.
 
 The Application uses the local registry image
 `registry.ibis-silverside.ts.net/chart-analyzer-optimized:0.15.0-optimized.1`.
@@ -11,9 +11,13 @@ It starts with manual sync and creates the destination namespace on sync.
 
 Before the first sync:
 
-1. Register this repository in Argo CD with a read-only SSH deploy key authorized
-   for this GitHub repository. The existing `k3s-argocd` repository registration
-   does not grant access to this separate repository.
+1. Authorize the dedicated public key in `chart-analyzer-optimized-deploy-key.pub`
+   under GitHub repository Settings → Deploy keys. Use title
+   `argocd-chart-analyzer-optimized-readonly` and leave Allow write access unchecked.
+   Argo CD is already registered using Secret `repo-chart-analyzer-optimized` in
+   namespace `argocd`; its private key exists only in that Secret. GitHub
+   authorization and chart rendering were verified successfully. Settings URL:
+   https://github.com/noctilucentbrain/chart-analyzer-optmized/settings/keys
 2. Build and push the image using `make build` and `make push` from the service folder.
 3. Create namespace `chart-analyzer-optimized`, then create Secret
    `chart-analyzer-optimized-mongodb` there with key `uri`. The chart selects
