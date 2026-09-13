@@ -1,0 +1,128 @@
+mongodb:
+  uri: mongodb://localhost:27017
+  database: chart_analyzer_optimized
+service:
+  poll_interval_seconds: 300
+  event_detection_interval_seconds: 300
+  log_file: logs/chart-analyzer.log
+tickers:
+- AAPL
+- AVGO
+- CRM
+- NOW
+- ADBE
+- INTU
+- PANW
+- META
+- NFLX
+- TMUS
+- DIS
+- LLY
+- UNH
+- JNJ
+- ABBV
+- MRK
+- ABT
+- ISRG
+- BRK.B
+- JPM
+- V
+- MA
+- CB
+- BAC
+- GS
+- HD
+- MCD
+- BKNG
+- TJX
+- LOW
+- PG
+- WMT
+- KO
+- PEP
+- COST
+- CAT
+- GE
+- UNP
+- ETN
+- WM
+- XOM
+- CVX
+- COP
+- NEE
+- SO
+- DUK
+- PLD
+- EQIX
+- LIN
+- SHW
+timeframes:
+- name: daily
+  interval: 1d
+  period: 2y
+  indicators:
+  - macd
+  - rsi
+  - ema_50
+  - ema_200
+  - volume_sma
+  - bollinger_bands
+  - volume_at_price
+  - price_stddev
+  - support_resistance
+  - volume_price_analysis
+- name: intraday_5m
+  interval: 5m
+  period: 5d
+  indicators:
+  - macd
+  - rsi
+  - ema_50
+  - ema_200
+indicators:
+  rsi:
+    window: 14
+  ema_50:
+    window: 50
+  ema_200:
+    window: 200
+  volume_sma:
+    window: 20
+  bollinger_bands:
+    window: 20
+    standard_deviations: 2
+  volume_at_price:
+    lookback: 90
+    price_bins: 24
+  price_stddev:
+    periods:
+    - 20
+    - 60
+    - 120
+  macd:
+    fast: 12
+    slow: 26
+    signal: 9
+  support_resistance:
+    lookback: 60
+    pivot_window: 3
+  volume_price_analysis:
+    volume_ma_window: 20
+events:
+  position_entry:
+    timeframe: daily
+    operator: AND
+    conditions:
+      macd_cross_over: {}
+      ema50_above_ema200: {}
+      rsi_between:
+        min: 30
+        max: 70
+      volume_price_up:
+        min_relative_volume: 0.9
+        direction: up
+  position_exit:
+    timeframe: daily
+    operator: OR
+    conditions:
+      macd_cross_under: {}

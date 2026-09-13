@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.setupMapName }}
+  labels:
+    {{- include "chart-analyzer.labels" . | nindent 4 }} 
+data:
+  config.yaml: |
+  {{ toYaml .Values.appSetup | nindent 4 }}
+
+

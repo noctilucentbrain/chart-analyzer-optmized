@@ -1,0 +1,6 @@
+# Optional test overrides; values.yaml includes the combined ticker universe.
+appSetup:
+  service:
+    download_batch_size: 20
+    download_workers: 4
+    download_timeout_seconds: 10

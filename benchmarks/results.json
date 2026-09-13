@@ -1,0 +1,11 @@
+{
+  "history_rows": 756,
+  "indicators": 10,
+  "requested_rows": 1,
+  "repeats": 3,
+  "baseline_seconds": 0.26433902400094667,
+  "optimized_seconds": 0.031667529001424555,
+  "cpu_speedup": 8.347320815244393,
+  "full_and_selected_output_parity": true,
+  "scope": "Synthetic indicator CPU only; excludes network and MongoDB latency."
+}

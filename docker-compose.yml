@@ -1,0 +1,21 @@
+name: chart-analyzer-optimized
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - optimized-mongo:/data/db
+  chart-analyzer:
+    build: .
+    image: chart-analyzer-optimized:0.15.0-optimized.1
+    depends_on:
+      - mongo
+    ports:
+      - "127.0.0.1:7001:8000"
+    environment:
+      CHART_ANALYZER_MONGODB_URI: mongodb://mongo:27017
+      CHART_ANALYZER_MONGODB_DATABASE: chart_analyzer_optimized
+      CHART_ANALYZER_CONFIG: /app/config.yaml
+    volumes:
+      - ./examples/docker-config.yaml:/app/config.yaml:ro
+volumes:
+  optimized-mongo:

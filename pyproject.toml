@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chart-analyzer"
+version = "0.15.0.dev1"
+description = "CLI market chart analyzer that stores cleaned OHLCV candles and indicators in MongoDB."
+readme = "readme.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.1",
+    "fastapi>=0.115",
+    "pandas>=2.0",
+    "pymongo>=4.6",
+    "pyyaml>=6.0",
+    "uvicorn[standard]>=0.30",
+    "yfinance>=0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "mongomock>=4.3",
+    "httpx>=0.28",
+]
+
+[project.scripts]
+chart-analyzer = "chart_analyzer.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

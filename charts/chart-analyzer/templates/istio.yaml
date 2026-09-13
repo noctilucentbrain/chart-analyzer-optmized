@@ -1,0 +1,85 @@
+{{- if and .Values.istio .Values.istio.enabled -}}
+{{- $fullName := include "chart-analyzer.fullname" . -}}
+{{- $serviceName := default (printf "%s-istio" $fullName) .Values.istio.service.name -}}
+{{- $servicePort := default .Values.service.port .Values.istio.service.port -}}
+{{- $gatewayName := default (printf "%s-gateway" $serviceName) .Values.istio.gateway.name -}}
+{{- $virtualServiceName := default (printf "%s-vs" $serviceName) .Values.istio.virtualService.name -}}
+{{- $destinationRuleName := default (printf "%s-dr" $serviceName) .Values.istio.destinationRule.name -}}
+{{- if .Values.istio.service.create }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $serviceName }}
+  labels:
+    {{- include "chart-analyzer.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ $servicePort }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "chart-analyzer.routingSelectorLabels" . | nindent 4 }}
+---
+{{- end }}
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ $gatewayName }}
+  labels:
+    {{- include "chart-analyzer.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- toYaml .Values.istio.gateway.selector | nindent 4 }}
+  servers:
+    {{- toYaml .Values.istio.gateway.servers | nindent 4 }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ $virtualServiceName }}
+  labels:
+    {{- include "chart-analyzer.labels" . | nindent 4 }}
+spec:
+  hosts:
+    {{- toYaml .Values.istio.virtualService.hosts | nindent 4 }}
+  gateways:
+    - {{ $gatewayName }}
+  http:
+    {{- range .Values.istio.batches }}
+    - match:
+        - headers:
+            {{ $.Values.istio.headerName }}:
+              exact: {{ .name | quote }}
+      route:
+        - destination:
+            host: {{ $serviceName }}
+            port:
+              number: {{ $servicePort }}
+            subset: {{ .name | quote }}
+    {{- end }}
+    {{- with .Values.istio.defaultBatchName }}
+    - route:
+        - destination:
+            host: {{ $serviceName }}
+            port:
+              number: {{ $servicePort }}
+            subset: {{ . | quote }}
+    {{- end }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ $destinationRuleName }}
+  labels:
+    {{- include "chart-analyzer.labels" . | nindent 4 }}
+spec:
+  host: {{ $serviceName }}
+  subsets:
+    {{- range .Values.istio.batches }}
+    - name: {{ .name | quote }}
+      labels:
+        batchName: {{ .name | quote }}
+    {{- end }}
+{{- end }}

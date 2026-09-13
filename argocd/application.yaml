@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: chart-analyzer-optimized
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:noctilucentbrain/chart-analyzer-optimized.git
+    targetRevision: main
+    path: chart-analyzer-optimized/charts/chart-analyzer
+    helm:
+      releaseName: chart-analyzer-optimized
+      valueFiles:
+        - values-optimized.yaml
+      parameters:
+        - name: image.repository
+          value: registry.ibis-silverside.ts.net/chart-analyzer-optimized
+        - name: image.tag
+          value: 0.15.0-optimized.1
+          forceString: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: chart-analyzer-optimized
+  # Manual sync until repository access, the image, and MongoDB credentials are ready.
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+  revisionHistoryLimit: 5
