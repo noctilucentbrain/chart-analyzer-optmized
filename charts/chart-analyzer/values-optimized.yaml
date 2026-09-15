@@ -4,3 +4,13 @@ appSetup:
     download_batch_size: 20
     download_workers: 4
     download_timeout_seconds: 10
+  daily_evaluation:
+    enabled: true
+    default_calendar: NYSE
+    ticker_calendars: {}
+    minutes_before_close: 60
+    max_lateness_minutes: 10
+    event_ttl_minutes: 10
+    stop_entries_minutes_before_close: 15
+    max_data_age_seconds: 300
+    finalization_delay_minutes: 15

@@ -1,3 +1,5 @@
+> **Session evaluation branch:** See [SESSION_EVALUATION.md](SESSION_EVALUATION.md) for the new daily timing, immutable event API, test deployment and rollback. It supersedes the daily append-only behavior described below.
+
 > **Optimized test version:** Start with [OPTIMIZATION.md](OPTIMIZATION.md) for deployment, benchmark results and limitations. The reference below describes the original API/CLI; use the new test deployment instructions instead of legacy deployment examples.
 
 # Chart Analyzer

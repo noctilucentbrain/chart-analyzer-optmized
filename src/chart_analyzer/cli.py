@@ -46,7 +46,7 @@ def run(config_path: Path, log_level: str) -> None:
 )
 @click.option("--log-level", default="INFO", show_default=True, help="Python logging level.")
 def init_db(config_path: Path, log_level: str) -> None:
-    """Initialize MongoDB with full configured history and events."""
+    """Initialize history; scheduled daily signals are never backfilled."""
     try:
         config = load_config(config_path)
         configure_logging(log_level=log_level, log_file=config.service.log_file)
@@ -65,7 +65,7 @@ def init_db(config_path: Path, log_level: str) -> None:
 )
 @click.option("--log-level", default="INFO", show_default=True, help="Python logging level.")
 def run_latest(config_path: Path, log_level: str) -> None:
-    """Fetch and store only candles not yet present in MongoDB."""
+    """Run due daily evaluations/finalization and ingest new intraday candles."""
     try:
         config = load_config(config_path)
         configure_logging(log_level=log_level, log_file=config.service.log_file)

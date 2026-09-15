@@ -6,7 +6,7 @@ services:
       - optimized-mongo:/data/db
   chart-analyzer:
     build: .
-    image: chart-analyzer-optimized:0.15.0-optimized.1
+    image: chart-analyzer-optimized:0.16.0-session-close.1
     depends_on:
       - mongo
     ports:

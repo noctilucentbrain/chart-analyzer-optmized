@@ -1,3 +1,5 @@
+> **Session evaluation branch:** See [SESSION_EVALUATION.md](SESSION_EVALUATION.md) for the new daily timing, immutable event API, test deployment and rollback. It supersedes the daily append-only behavior described below.
+
 # Optimized chart analyzer
 
 This is a separate working copy of the original service. The original repository has not been modified. Start with the deployment steps below; the original API/CLI reference is in `readme.md`.

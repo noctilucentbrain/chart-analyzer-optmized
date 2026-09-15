@@ -52,9 +52,21 @@ def run(config: AppConfig) -> None:
                         LOGGER.warning("No initialization data ticker=%s timeframe=%s", ticker, timeframe.name)
                         continue
                     candles, report = clean_ohlcv(raw, ticker, timeframe.name, timeframe.interval)
+                    closed = None
+                    if config.daily_evaluation.enabled and timeframe.interval == '1d':
+                        from chart_analyzer.sessions import session_plan, utc_now
+                        _, closed = session_plan(ticker, config.daily_evaluation, utc_now())
+                        candles['timestamp'] = candles.timestamp.dt.normalize()
+                        candles = candles.loc[candles.timestamp <= pd.Timestamp(closed, tz='UTC')] if closed else candles.iloc[:0]
+                        if candles.empty:
+                            continue
                     indicators = compute_indicators(candles, timeframe.indicators, config.indicators)
                     storage.upsert_indicators(indicators)
                     storage.upsert_candles(candles)
+                    if closed and candles.timestamp.iloc[-1] == pd.Timestamp(closed, tz='UTC'):
+                        from chart_analyzer.daily import identity
+                        storage.database.session_finalizations.update_one({'_id': identity(ticker, timeframe.name)},
+                            {'$max': {'session': closed}}, upsert=True)
                     LOGGER.info("Initialized ticker=%s timeframe=%s rows=%d gaps=%d",
                                 ticker, timeframe.name, len(candles), len(report.gaps))
     finally:
@@ -77,7 +89,11 @@ def run_latest(config: AppConfig) -> list[IngestionSummary]:
     started = time.perf_counter()
     try:
         storage.ensure_indexes()
-        for timeframe in config.timeframes:
+        for timeframe in sorted(config.timeframes, key=lambda item: item.interval != '1d'):
+            if config.daily_evaluation.enabled and timeframe.interval == '1d':
+                from chart_analyzer.daily import run_daily_timeframe
+                summaries.extend(run_daily_timeframe(config, storage, collector, timeframe))
+                continue
             size = config.service.download_batch_size
             for offset in range(0, len(config.tickers), size):
                 batch = config.tickers[offset:offset + size]
@@ -109,14 +125,14 @@ def detect_configured_events(config: AppConfig) -> None:
     try:
         storage.ensure_indexes()
         for strategy in config.events:
-            for ticker in config.tickers:
-                events = storage.detect_events(strategy, ticker=ticker, save=True)
-                LOGGER.info(
-                    "Detected events strategy=%s ticker=%s count=%s saved=true",
-                    strategy.name,
-                    ticker,
-                    len(events),
-                )
+            for timeframe in config.timeframes:
+                if strategy.timeframe not in (None, timeframe.name):
+                    continue
+                if config.daily_evaluation.enabled and timeframe.interval == '1d':
+                    LOGGER.info("Historical daily event generation disabled for scheduled strategy=%s", strategy.name)
+                    continue
+                for ticker in config.tickers:
+                    storage.detect_events(strategy, ticker=ticker, timeframe=timeframe.name, save=True)
     finally:
         storage.close()
 
@@ -242,6 +258,8 @@ def run_service(
     event_interval = event_interval_seconds or config.service.event_detection_interval_seconds or interval
     if interval <= 0:
         raise ValueError("Service interval must be a positive number.")
+    if config.daily_evaluation.enabled and interval > config.daily_evaluation.max_lateness_minutes * 60:
+        raise ValueError("Polling interval must not exceed the daily evaluation lateness window.")
     if event_interval <= 0:
         raise ValueError("Service event interval must be a positive number.")
 
@@ -256,6 +274,7 @@ def run_service(
             LOGGER.info("Stopping chart analyzer service")
             break
 
+        cycle_started = time.monotonic()
         try:
             run_latest(config)
         except ServerSelectionTimeoutError as error:
@@ -268,14 +287,15 @@ def run_service(
         if max_runs is not None and runs >= max_runs:
             break
 
-        LOGGER.info("Chart analyzer service sleeping interval_seconds=%s", interval)
+        pause = max(0, interval - (time.monotonic() - cycle_started)) if config.daily_evaluation.enabled else interval
+        LOGGER.info("Chart analyzer service sleeping interval_seconds=%s", pause)
         try:
             if stop_event is not None:
-                if stop_event.wait(interval):
+                if stop_event.wait(pause):
                     LOGGER.info("Stopping chart analyzer service")
                     break
             else:
-                sleep(interval)
+                sleep(pause)
         except KeyboardInterrupt:
             LOGGER.info("Stopping chart analyzer service")
             break

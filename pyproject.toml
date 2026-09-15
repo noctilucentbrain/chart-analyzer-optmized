@@ -4,14 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chart-analyzer"
-version = "0.15.0.dev1"
+version = "0.16.0.dev1"
 description = "CLI market chart analyzer that stores cleaned OHLCV candles and indicators in MongoDB."
 readme = "readme.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "click>=8.1",
     "fastapi>=0.115",
     "pandas>=2.0",
+    "pandas-market-calendars>=5.1,<6",
     "pymongo>=4.6",
     "pyyaml>=6.0",
     "uvicorn[standard]>=0.30",

@@ -53,6 +53,21 @@ class MongoStorage:
             name="latest_events_by_timeframe",
         )
 
+        self.database.session_evaluations.create_index(
+            [("triggered", ASCENDING), ("expires_at", ASCENDING)], name="actionable_session_events")
+
+    def get_actionable_events(self, timeframe=None, ticker=None, now=None):
+        from chart_analyzer.sessions import utc, utc_now
+        now = utc(now) if now is not None else utc_now()
+        query = {"triggered": True, "evaluated_at": {"$lte": now.to_pydatetime()},
+                 "expires_at": {"$gt": now.to_pydatetime()}, "session_close": {"$gt": now.to_pydatetime()}}
+        if timeframe is not None:
+            query['timeframe'] = timeframe.lower()
+        if ticker is not None:
+            query['ticker'] = ticker.upper()
+        return list(self.database.session_evaluations.find(query, {'_id': 0}).sort([
+            ('evaluated_at', ASCENDING), ('event_id', ASCENDING)]))
+
     def upsert_candles(self, candles: pd.DataFrame) -> UpsertResult:
         return _bulk_upsert(
             self.candles,

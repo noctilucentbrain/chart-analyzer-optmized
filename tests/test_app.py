@@ -1,11 +1,12 @@
 import pandas as pd
 
 from chart_analyzer.app import _newer_candles, run_service
-from chart_analyzer.config import AppConfig, MongoConfig, ServiceConfig, TimeframeConfig
+from chart_analyzer.config import DailyEvaluationConfig, AppConfig, MongoConfig, ServiceConfig, TimeframeConfig
 
 
 def config():
     return AppConfig(
+        daily_evaluation=DailyEvaluationConfig(enabled=False),
         mongodb=MongoConfig(uri="mongodb://localhost:27017", database="trading"),
         tickers=["AAPL"],
         timeframes=[

@@ -49,3 +49,9 @@ uvloop==0.22.1
 watchfiles==1.2.0
 websockets==17.1
 yfinance==1.7.0
+pandas-market-calendars==5.4.0
+exchange-calendars==4.13.2
+korean-lunar-calendar==0.4.0
+pyluach==2.3.0
+toolz==1.1.0
+tzdata==2026.4

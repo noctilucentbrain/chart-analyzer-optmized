@@ -93,6 +93,17 @@ def create_app(config_path: str | Path, log_level: str = "INFO") -> FastAPI:
             raise HTTPException(status_code=503, detail=f"MongoDB error: {error}") from error
         return {"status": "completed", "summaries": [asdict(summary) for summary in summaries]}
 
+    @app.get("/events/actionable")
+    def actionable_events(timeframe: str | None = None, ticker: str | None = None):
+        storage = MongoStorage(config.mongodb.uri, config.mongodb.database,
+            server_selection_timeout_ms=config.mongodb.server_selection_timeout_ms)
+        try:
+            return {"events": storage.get_actionable_events(timeframe=timeframe, ticker=ticker)}
+        except PyMongoError as error:
+            raise HTTPException(status_code=503, detail="MongoDB unavailable") from error
+        finally:
+            storage.close()
+
     @app.get("/candles/{ticker}/{timeframe}/{timestamp}")
     def candle_with_indicators(
         ticker: str,
@@ -148,6 +159,11 @@ def create_app(config_path: str | Path, log_level: str = "INFO") -> FastAPI:
                     ticker=ticker,
                     indicators=indicators,
                 )
+                if config.daily_evaluation.enabled and any(
+                    t.interval == '1d' and t.name == timeframe.lower() for t in config.timeframes
+                ):
+                    # Never serve historical or expired signals to daily consumers.
+                    document['events'] = storage.get_actionable_events(timeframe=timeframe, ticker=ticker)
             except ServerSelectionTimeoutError as error:
                 raise HTTPException(
                     status_code=503,

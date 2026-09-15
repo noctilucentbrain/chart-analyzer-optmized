@@ -3,7 +3,7 @@ batchName: optimized
 image:
   repository: chart-analyzer-optimized
   pullPolicy: IfNotPresent
-  tag: 0.15.0-optimized.1
+  tag: 0.16.0-session-close.1
 imagePullSecrets: []
 nameOverride: chart-analyzer-optimized
 fullnameOverride: chart-analyzer-optimized
